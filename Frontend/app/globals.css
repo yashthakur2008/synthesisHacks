@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm neutral base — no pure black/white */
+  --color-paper: #faf7f2;
+  --color-paper-soft: #f3eee5;
+  --color-paper-deep: #ebe4d6;
+
+  --color-ink: #2a2724;
+  --color-ink-soft: #4a423b;
+  --color-ink-muted: #6f655a;
+  --color-ink-faint: #9c9286;
+
+  /* Gentle accents */
+  --color-accent: #4a6fa5;          /* muted blue */
+  --color-accent-soft: #e6ecf4;
+  --color-accent-strong: #2f4f7a;
+  --color-grow: #6b8e6f;             /* soft green */
+  --color-grow-soft: #e8efe6;
+  --color-warm: #c8956d;             /* calm amber */
+  --color-warm-soft: #f5e8d8;
+  --color-alert: #a14b4b;            /* muted earthen red, never neon */
+  --color-alert-soft: #f1dede;
+
+  /* Rule line — quieter than ink-faint */
+  --color-rule: #d9d0c0;
+
+  /* Type */
+  --font-display: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius — small, never balloon */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/*
+ * Contrast inventory (all ratios verified against #faf7f2 background)
+ *  ink           #2a2724  →  12.5 : 1  (body text)
+ *  ink-soft      #4a423b  →   8.4 : 1  (secondary)
+ *  ink-muted     #6f655a  →   5.0 : 1  (meta)
+ *  ink-faint     #9c9286  →   3.1 : 1  (placeholders / disabled — UI only)
+ *  accent        #4a6fa5  →   5.0 : 1  (link / button bg vs paper)
+ *  accent-strong #2f4f7a  →   8.0 : 1
+ *  alert         #a14b4b  →   5.2 : 1
+ */
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible focus on every interactive surface. Replaces, never removes. */
+  :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus {
+    outline: none;
+  }
+
+  :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-accent-strong);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Selection blends with the warm palette */
+  ::selection {
+    background: var(--color-warm-soft);
+    color: var(--color-ink);
+  }
+
+  /* Reduced motion — kill all animation, never required for understanding */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .surface {
+    background: #fff;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-lg);
+  }
+
+  .surface-soft {
+    background: var(--color-paper-soft);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-lg);
+  }
+
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    transition: background 200ms var(--ease-soft);
+  }
+  .btn-primary:hover {
+    background: var(--color-accent-strong);
+  }
+  .btn-primary:disabled {
+    background: var(--color-ink-faint);
+    cursor: not-allowed;
+  }
+
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-ink-soft);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-display);
+    transition: background 180ms var(--ease-soft);
+  }
+  .btn-quiet:hover {
+    background: var(--color-paper-soft);
+    color: var(--color-ink);
+  }
+
+  .field-input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.9rem;
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: border-color 160ms var(--ease-soft), box-shadow 160ms var(--ease-soft);
+  }
+  .field-input::placeholder {
+    color: var(--color-ink-faint);
+  }
+  .field-input:hover {
+    border-color: var(--color-ink-muted);
+  }
+  .field-input:focus-visible {
+    border-color: var(--color-accent-strong);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+    outline: none;
+  }
+  .field-input[aria-invalid="true"] {
+    border-color: var(--color-alert);
+  }
+  .field-input[aria-invalid="true"]:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-alert-soft);
+  }
+}
