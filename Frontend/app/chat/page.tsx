@@ -9,6 +9,7 @@ import { useFlow } from "@/components/flow/FlowProvider";
 import { analyze } from "@/lib/mock/analyze";
 import { reconstruct } from "@/lib/mock/reconstruct";
 import type { Analysis, ChatMessage } from "@/lib/types";
+import { DittoMark } from "@/components/identity/DittoMark";
 
 export default function ChatPage() {
   return (
@@ -333,18 +334,28 @@ function Bubble({
   building: boolean;
 }) {
   const isUser = message.role === "user";
+  if (isUser) {
+    return (
+      <li className="flex w-full justify-end">
+        <div className="flex max-w-[42rem] flex-col gap-3 rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--color-accent-soft)] px-5 py-4 text-[var(--color-ink)]">
+          <p className="sr-only">You said:</p>
+          <div className="whitespace-pre-wrap leading-relaxed">
+            {message.text}
+          </div>
+        </div>
+      </li>
+    );
+  }
   return (
-    <li
-      className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
-    >
+    <li className="flex w-full justify-start gap-3">
       <div
-        className={`flex max-w-[42rem] flex-col gap-3 rounded-[var(--radius-lg)] px-5 py-4 ${
-          isUser
-            ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]"
-            : "bg-white border border-[var(--color-rule)] text-[var(--color-ink)]"
-        }`}
+        aria-hidden="true"
+        className="mt-1 shrink-0 text-[var(--color-ink-soft)]"
       >
-        <p className="sr-only">{isUser ? "You said:" : "Ditto said:"}</p>
+        <DittoMark size={32} />
+      </div>
+      <div className="flex max-w-[42rem] flex-col gap-3 rounded-[var(--radius-lg)] rounded-tl-sm border border-[var(--color-rule)] bg-white px-5 py-4 text-[var(--color-ink)]">
+        <p className="sr-only">Ditto said:</p>
         <div className="whitespace-pre-wrap leading-relaxed">{message.text}</div>
         {message.findings ? <FindingsBlock analysis={message.findings} /> : null}
         {message.offerRebuild ? (
@@ -366,8 +377,11 @@ function Bubble({
 
 function ThinkingBubble({ label }: { label: string }) {
   return (
-    <li className="flex w-full justify-start" aria-hidden="true">
-      <div className="flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-rule)] bg-white px-5 py-3 text-[var(--color-ink-muted)] italic">
+    <li className="flex w-full justify-start gap-3" aria-hidden="true">
+      <div className="mt-1 shrink-0 text-[var(--color-ink-faint)]">
+        <DittoMark size={32} />
+      </div>
+      <div className="flex items-center gap-2 rounded-[var(--radius-lg)] rounded-tl-sm border border-[var(--color-rule)] bg-white px-5 py-3 text-[var(--color-ink-muted)] italic">
         <span className="inline-flex gap-1">
           <Dot delay={0} />
           <Dot delay={150} />
@@ -395,14 +409,37 @@ function FindingsBlock({ analysis }: { analysis: Analysis }) {
     { title: "Things that may get in the way", items: analysis.barriers },
   ];
   return (
-    <div className="mt-1 flex flex-col gap-4 border-t border-[var(--color-rule)] pt-4">
+    <div className="mt-1 flex flex-col gap-2 border-t border-[var(--color-rule)] pt-4">
+      <p className="text-xs text-[var(--color-ink-muted)]">
+        Tap a section to read what I found. Or just describe how you want the
+        new version to feel.
+      </p>
       {sections.map((s) =>
         s.items.length > 0 ? (
-          <section key={s.title}>
-            <h2 className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--color-ink)]">
-              {s.title}
-            </h2>
-            <ul className="mt-2 flex flex-col gap-2">
+          <details
+            key={s.title}
+            className="group rounded-[var(--radius-md)] border border-[var(--color-rule)] bg-[var(--color-paper)]/60 open:bg-white"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[var(--radius-md)] px-4 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent-strong)] focus-visible:outline-offset-2">
+              <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--color-ink)]">
+                {s.title}
+              </span>
+              <span className="flex items-center gap-2 text-xs text-[var(--color-ink-muted)]">
+                <span
+                  aria-label={`${s.items.length} ${s.items.length === 1 ? "item" : "items"}`}
+                  className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-paper-deep)] px-1.5 font-semibold text-[var(--color-ink-soft)]"
+                >
+                  {s.items.length}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="transition-transform group-open:rotate-180"
+                >
+                  ▾
+                </span>
+              </span>
+            </summary>
+            <ul className="flex flex-col gap-3 border-t border-[var(--color-rule)] px-4 py-3">
               {s.items.map((f) => (
                 <li
                   key={f.id}
@@ -417,7 +454,7 @@ function FindingsBlock({ analysis }: { analysis: Analysis }) {
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         ) : null,
       )}
     </div>

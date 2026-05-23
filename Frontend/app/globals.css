@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Warm neutral base — no pure black/white */
+  /* Warm neutral base — no pure black/white in default theme */
   --color-paper: #faf7f2;
   --color-paper-soft: #f3eee5;
   --color-paper-deep: #ebe4d6;
@@ -19,35 +19,112 @@
   --color-grow-soft: #e8efe6;
   --color-warm: #c8956d;             /* calm amber */
   --color-warm-soft: #f5e8d8;
-  --color-alert: #a14b4b;            /* muted earthen red, never neon */
+  --color-alert: #a14b4b;
   --color-alert-soft: #f1dede;
 
-  /* Rule line — quieter than ink-faint */
   --color-rule: #d9d0c0;
 
-  /* Type */
+  /* Type — sans default */
   --font-display: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
 
-  /* Radius — small, never balloon */
+  /* Reading rhythm — overridable per dyslexia level */
+  --body-size: 1.0625rem;
+  --body-leading: 1.65;
+  --body-tracking: 0.005em;
+  --body-measure: 68ch;
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 12px;
 
-  /* Motion */
   --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --focus-ring: 0 0 0 3px var(--color-accent-soft);
+  --focus-outline: 2px solid var(--color-accent-strong);
 }
 
 /*
- * Contrast inventory (all ratios verified against #faf7f2 background)
- *  ink           #2a2724  →  12.5 : 1  (body text)
- *  ink-soft      #4a423b  →   8.4 : 1  (secondary)
- *  ink-muted     #6f655a  →   5.0 : 1  (meta)
- *  ink-faint     #9c9286  →   3.1 : 1  (placeholders / disabled — UI only)
- *  accent        #4a6fa5  →   5.0 : 1  (link / button bg vs paper)
+ * Contrast inventory (verified against #faf7f2 default background)
+ *  ink           #2a2724  →  12.5 : 1
+ *  ink-soft      #4a423b  →   8.4 : 1
+ *  ink-muted     #6f655a  →   5.0 : 1
+ *  ink-faint     #9c9286  →   3.1 : 1  (UI only — never body)
+ *  accent        #4a6fa5  →   5.0 : 1
  *  accent-strong #2f4f7a  →   8.0 : 1
  *  alert         #a14b4b  →   5.2 : 1
+ * High-contrast mode (data-contrast=high) overrides to pure black/white = 21:1.
  */
+
+/* ========================================================================
+   USER PREFERENCE THEMING
+   Driven by data-* attributes set on <html> via a pre-hydration script
+   (see app/layout.tsx) and kept in sync by FlowProvider.
+   ======================================================================== */
+
+/* High contrast — meets WCAG AAA, pure black on pure white */
+[data-contrast="high"] {
+  --color-paper: #ffffff;
+  --color-paper-soft: #f5f5f5;
+  --color-paper-deep: #ebebeb;
+  --color-ink: #000000;
+  --color-ink-soft: #111111;
+  --color-ink-muted: #2a2a2a;
+  --color-ink-faint: #555555;
+  --color-rule: #000000;
+  --color-accent: #0a3b80;
+  --color-accent-soft: #dde6f5;
+  --color-accent-strong: #0a3b80;
+  --color-grow: #1f5a23;
+  --color-grow-soft: #dceadc;
+  --color-warm: #7a4a18;
+  --color-warm-soft: #f1e2cc;
+  --color-alert: #7a0e0e;
+  --color-alert-soft: #f3d6d6;
+}
+
+[data-contrast="high"] .surface,
+[data-contrast="high"] .field-input,
+[data-contrast="high"] [class*="border-[var(--color-rule)]"] {
+  border-width: 2px;
+}
+
+/* Larger text — bumps the base reading size proportionally */
+[data-text-size="large"] {
+  --body-size: 1.1875rem;     /* ~19px */
+  --body-leading: 1.7;
+}
+
+/* Dyslexia tiers — progressively wider tracking, leading, and shorter measure */
+[data-dyslexia="low"] {
+  --body-tracking: 0.025em;
+  --body-leading: 1.8;
+}
+[data-dyslexia="medium"] {
+  --body-tracking: 0.045em;
+  --body-leading: 1.95;
+  --body-measure: 60ch;
+}
+[data-dyslexia="high"] {
+  --body-tracking: 0.065em;
+  --body-leading: 2.1;
+  --body-measure: 52ch;
+  --body-size: 1.125rem;
+}
+
+/* User-set reduced motion (independent of OS pref) */
+[data-motion="reduced"] *,
+[data-motion="reduced"] ::before,
+[data-motion="reduced"] ::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ========================================================================
+   BASE STYLES
+   ======================================================================== */
 
 @layer base {
   *,
@@ -66,19 +143,17 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-body);
-    font-size: 1.0625rem;
-    line-height: 1.65;
-    letter-spacing: 0.005em;
+    font-size: var(--body-size);
+    line-height: var(--body-leading);
+    letter-spacing: var(--body-tracking);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    transition:
+      background 200ms var(--ease-soft),
+      color 200ms var(--ease-soft);
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     color: var(--color-ink);
     letter-spacing: -0.01em;
@@ -86,32 +161,42 @@
     text-wrap: balance;
   }
 
+  /* In high-contrast mode, headings get slightly tighter tracking again */
+  [data-contrast="high"] h1,
+  [data-contrast="high"] h2,
+  [data-contrast="high"] h3 {
+    letter-spacing: 0;
+    font-weight: 800;
+  }
+
   p {
     text-wrap: pretty;
   }
 
-  /* Visible focus on every interactive surface. Replaces, never removes. */
+  /* Apply the reading measure to prose containers */
+  .prose-measure {
+    max-width: var(--body-measure);
+  }
+
   :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus {
     outline: none;
   }
 
   :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
-    outline: 2px solid var(--color-accent-strong);
+    outline: var(--focus-outline);
     outline-offset: 3px;
+    box-shadow: var(--focus-ring);
     border-radius: var(--radius-sm);
   }
 
-  /* Selection blends with the warm palette */
   ::selection {
     background: var(--color-warm-soft);
     color: var(--color-ink);
   }
 
-  /* Reduced motion — kill all animation, never required for understanding */
+  /* OS-level reduced motion — independent of user pref */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    ::before,
-    ::after {
+    *, ::before, ::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -125,6 +210,9 @@
     background: #fff;
     border: 1px solid var(--color-rule);
     border-radius: var(--radius-lg);
+  }
+  [data-contrast="high"] .surface {
+    background: var(--color-paper);
   }
 
   .surface-soft {
@@ -150,6 +238,9 @@
     background: var(--color-ink-faint);
     cursor: not-allowed;
   }
+  [data-contrast="high"] .btn-primary {
+    border: 2px solid var(--color-ink);
+  }
 
   .btn-quiet {
     background: transparent;
@@ -174,7 +265,9 @@
     font-family: var(--font-body);
     font-size: 1rem;
     line-height: 1.5;
-    transition: border-color 160ms var(--ease-soft), box-shadow 160ms var(--ease-soft);
+    transition:
+      border-color 160ms var(--ease-soft),
+      box-shadow 160ms var(--ease-soft);
   }
   .field-input::placeholder {
     color: var(--color-ink-faint);
@@ -192,5 +285,8 @@
   }
   .field-input[aria-invalid="true"]:focus-visible {
     box-shadow: 0 0 0 3px var(--color-alert-soft);
+  }
+  [data-contrast="high"] .field-input {
+    border-width: 2px;
   }
 }

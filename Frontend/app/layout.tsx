@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Atkinson_Hyperlegible, Lexend } from "next/font/google";
 import { FlowProvider } from "@/components/flow/FlowProvider";
 import { Shell } from "@/components/layout/Shell";
+import { PrefThemeScript } from "@/components/a11y/PrefThemeScript";
 import "./globals.css";
 
 const atkinson = Atkinson_Hyperlegible({
@@ -31,6 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${atkinson.variable} ${lexend.variable}`}>
+      <head>
+        <PrefThemeScript />
+      </head>
       <body>
         <FlowProvider>
           <Shell>{children}</Shell>

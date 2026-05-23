@@ -15,6 +15,7 @@ import {
   type FlowState,
 } from "@/lib/types";
 import { clearFlow, loadFlow, saveFlow } from "@/lib/storage";
+import { applyPreferencesToDocument } from "@/lib/applyPrefs";
 
 type FlowContextValue = {
   state: FlowState;
@@ -46,6 +47,12 @@ export function FlowProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrated) saveFlow(state);
   }, [state, hydrated]);
+
+  // Keep <html> data-* attrs in sync with current preferences.
+  useEffect(() => {
+    if (!hydrated) return;
+    applyPreferencesToDocument(state.preferences);
+  }, [hydrated, state.preferences]);
 
   const set = useCallback(
     <K extends keyof FlowState>(key: K, value: FlowState[K]) => {
