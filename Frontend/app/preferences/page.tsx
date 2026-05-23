@@ -340,8 +340,8 @@ function Senses({
           Your senses
         </h2>
         <p className="text-[var(--color-ink-muted)] text-sm leading-relaxed">
-          Tell Ditto what works for you. Changes apply to this app right away —
-          you'll see them on the next step.
+          Tell Ditto what works for you. Changes apply to this app right away
+          &mdash; you&rsquo;ll see them on the next step.
         </p>
       </header>
       <CheckboxGroup
