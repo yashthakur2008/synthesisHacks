@@ -113,7 +113,7 @@ function OutputContent() {
           Try another page
         </button>
         <Link
-          href="/preferences"
+          href="/settings"
           className="btn-quiet underline-offset-4 hover:underline"
         >
           Adjust my needs

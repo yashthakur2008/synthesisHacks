@@ -13,7 +13,7 @@ type Mode = "login" | "signup";
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { patch } = useFlow();
+  const { state, patch } = useFlow();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +21,13 @@ export default function WelcomePage() {
   const [passErr, setPassErr] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+
+  // Returning users who've already done the initial survey skip it on sign-in.
+  // First-time users still flow through /preferences. They can edit later
+  // from /settings.
+  function destinationAfterAuth(): string {
+    return state.preferences ? "/chat" : "/preferences";
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,15 +46,17 @@ export default function WelcomePage() {
 
     setBusy(true);
     setStatus("Signing you in…");
+    const next = destinationAfterAuth();
     window.setTimeout(() => {
       patch({ authed: true });
-      router.push("/preferences");
+      router.push(next);
     }, 500);
   }
 
   function skip() {
+    const next = destinationAfterAuth();
     patch({ authed: true });
-    router.push("/preferences");
+    router.push(next);
   }
 
   return (

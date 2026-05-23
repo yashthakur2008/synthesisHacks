@@ -32,6 +32,8 @@ export type Preferences = {
   complexity: ReadingComplexity;
   childSafe: boolean;
   simplifyLanguage: boolean;
+  /** Text-scale multiplier (1.0 = default). Only applied when "larger-text" is in vision[]. */
+  textScale: number;
 };
 
 export type Rebuilt = {
@@ -64,6 +66,7 @@ export const defaultPreferences: Preferences = {
   complexity: 3,
   childSafe: false,
   simplifyLanguage: false,
+  textScale: 1.2,
 };
 
 export const initialFlow: FlowState = {

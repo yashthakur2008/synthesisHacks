@@ -8,18 +8,32 @@ export function HeaderActions() {
   const pathname = usePathname();
   const { state, hydrated, reset } = useFlow();
 
-  // Hide auth chrome on the auth page itself and the reset page.
-  if (pathname === "/welcome" || pathname === "/reset") return null;
+  // Hide auth chrome on the auth page itself, the reset page, and inside
+  // the settings page (which has its own affordances).
+  if (
+    pathname === "/welcome" ||
+    pathname === "/reset" ||
+    pathname === "/settings"
+  )
+    return null;
 
-  // Authed: show a quiet greeting + sign out.
+  // Authed: show a quiet greeting + settings + sign out.
   if (hydrated && state.authed) {
     const first = state.preferences?.name?.trim().split(/\s+/)[0];
     return (
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-1 text-sm sm:gap-2">
         {first ? (
-          <span className="hidden text-[var(--color-ink-muted)] sm:inline">
+          <span className="hidden text-[var(--color-ink-muted)] sm:inline sm:mr-2">
             Hi, {first}
           </span>
+        ) : null}
+        {state.preferences ? (
+          <Link
+            href="/settings"
+            className="rounded-md px-3 py-2 font-[family-name:var(--font-display)] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-paper-soft)] hover:text-[var(--color-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent-strong)]"
+          >
+            Settings
+          </Link>
         ) : null}
         <button
           type="button"

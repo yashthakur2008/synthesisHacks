@@ -89,10 +89,14 @@
   border-width: 2px;
 }
 
-/* Larger text — bumps the base reading size proportionally */
-[data-text-size="large"] {
-  --body-size: 1.1875rem;     /* ~19px */
-  --body-leading: 1.7;
+/*
+ * Larger text — driven by the --text-scale CSS variable on <html>.
+ * Multiplying the root font-size scales every rem-based length in the app
+ * (headings, body, padding, max-widths) at the same rate, so proportions
+ * stay correct. Set by applyPreferencesToDocument; default 1.
+ */
+html {
+  font-size: calc(100% * var(--text-scale, 1));
 }
 
 /* Dyslexia tiers — progressively wider tracking, leading, and shorter measure */

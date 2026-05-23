@@ -12,6 +12,7 @@ import { Toggle } from "@/components/form/Toggle";
 import { Field } from "@/components/form/Field";
 import { TextInput } from "@/components/form/TextInput";
 import { Combobox } from "@/components/form/Combobox";
+import { FontScaleSlider } from "@/components/form/FontScaleSlider";
 import { StepGuard } from "@/components/flow/StepGuard";
 import { useFlow } from "@/components/flow/FlowProvider";
 import { applyPreferencesToDocument } from "@/lib/applyPrefs";
@@ -373,17 +374,27 @@ function Senses({
         legend="Vision"
         description="Choose any that apply. Leave blank if none do."
       >
-        {visionOptions.map((opt) => (
-          <Checkbox
-            key={opt.value}
-            label={opt.label}
-            description={opt.description}
-            checked={prefs.vision.includes(opt.value)}
-            onChange={() =>
-              setPrefs({ ...prefs, vision: toggle(prefs.vision, opt.value) })
-            }
-          />
-        ))}
+        {visionOptions.map((opt) => {
+          const checked = prefs.vision.includes(opt.value);
+          return (
+            <div key={opt.value} className="flex flex-col">
+              <Checkbox
+                label={opt.label}
+                description={opt.description}
+                checked={checked}
+                onChange={() =>
+                  setPrefs({ ...prefs, vision: toggle(prefs.vision, opt.value) })
+                }
+              />
+              {opt.value === "larger-text" && checked ? (
+                <FontScaleSlider
+                  value={prefs.textScale}
+                  onChange={(v) => setPrefs({ ...prefs, textScale: v })}
+                />
+              ) : null}
+            </div>
+          );
+        })}
       </CheckboxGroup>
       <CheckboxGroup
         legend="Hearing"
