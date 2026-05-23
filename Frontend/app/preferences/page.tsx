@@ -320,6 +320,31 @@ function AboutYou({
         error={countryErr}
         autoComplete="country-name"
       />
+      <Field
+        label="Your age"
+        description="Optional. Helps Ditto pick the right tone — kid-friendly, plain adult, or supportive for older readers."
+      >
+        {(ids) => (
+          <TextInput
+            id={ids.inputId}
+            type="number"
+            inputMode="numeric"
+            min={4}
+            max={120}
+            placeholder="e.g. 32"
+            value={prefs.age === null ? "" : String(prefs.age)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const n = raw === "" ? null : Number.parseInt(raw, 10);
+              setPrefs({
+                ...prefs,
+                age: Number.isFinite(n as number) ? (n as number) : null,
+              });
+            }}
+            aria-describedby={ids["aria-describedby"]}
+          />
+        )}
+      </Field>
     </section>
   );
 }

@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Container } from "@/components/layout/Container";
 import { StepHeader } from "@/components/layout/StepHeader";
 import { StepGuard } from "@/components/flow/StepGuard";
 import { useFlow } from "@/components/flow/FlowProvider";
-import { ViewToggle } from "@/components/output/ViewToggle";
 import { RebuiltFrame } from "@/components/output/RebuiltFrame";
-import type { RebuiltView } from "@/components/output/ViewToggle";
 
 export default function OutputPage() {
   return (
@@ -19,11 +16,26 @@ export default function OutputPage() {
   );
 }
 
+function profileBlurb(d: string) {
+  switch (d) {
+    case "blind":
+      return "Restructured for screen readers, with image descriptions and clear landmark roles.";
+    case "dyslexia":
+      return "Wider spacing, shorter lines, and plainer phrasing — typography that doesn't fight you.";
+    case "deaf":
+      return "Captions and transcripts surfaced where they were missing.";
+    case "elderly":
+      return "Larger type, calmer contrast, and clearer language.";
+    default:
+      return "Adapted for easier, calmer reading.";
+  }
+}
+
 function OutputContent() {
   const router = useRouter();
   const { state, patch, reset } = useFlow();
   const rebuilt = state.rebuilt;
-  const [view, setView] = useState<RebuiltView>("simplified");
+  if (!rebuilt) return null;
 
   function tryAnother() {
     patch({
@@ -36,90 +48,81 @@ function OutputContent() {
     router.push("/chat");
   }
 
-  if (!rebuilt) return null;
-
-  const grouped = {
-    readability: rebuilt.improvements.filter((i) => i.category === "readability"),
-    a11y: rebuilt.improvements.filter((i) => i.category === "a11y"),
-    structure: rebuilt.improvements.filter((i) => i.category === "structure"),
-  };
-
   return (
     <Container size="lg">
       <StepHeader current="output" />
 
       <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        Here’s your easier version.
+        Here&rsquo;s your easier version.
       </h1>
-      <p className="mt-4 max-w-prose text-[var(--color-ink-soft)] text-lg leading-relaxed">
-        Switch between views to see how the page changes. The simplified view is
-        usually a good starting point.
+      <p className="prose-measure mt-4 text-[var(--color-ink-soft)] text-lg leading-relaxed">
+        {profileBlurb(rebuilt.profileApplied.disability)}
       </p>
 
-      <div className="mt-10 flex flex-col gap-6">
-        <ViewToggle value={view} onChange={setView} />
-        <RebuiltFrame view={rebuilt.views[view]} viewKind={view} />
+      <div className="mt-8">
+        <RebuiltFrame
+          html={rebuilt.transformedHtml}
+          originalUrl={rebuilt.originalUrl}
+        />
       </div>
 
       <section
         aria-labelledby="summary"
-        className="surface mt-12 grid gap-8 p-6 sm:p-8 md:grid-cols-2"
+        className="surface-soft mt-10 flex flex-col gap-3 p-6 sm:p-8"
       >
-        <div>
-          <h2 id="summary" className="text-2xl font-semibold">
-            What changed
-          </h2>
-          <p className="mt-2 max-w-prose text-[var(--color-ink-muted)]">
-            A plain-language summary of what Ditto improved.
-          </p>
-
-          <dl className="mt-6 flex flex-col gap-5">
-            <SummaryGroup
-              term="Readability"
-              items={grouped.readability.map((i) => i.summary)}
-            />
-            <SummaryGroup
-              term="Accessibility"
-              items={grouped.a11y.map((i) => i.summary)}
-            />
-            <SummaryGroup
-              term="Structure"
-              items={grouped.structure.map((i) => i.summary)}
-            />
-          </dl>
-        </div>
-
-        <div className="surface-soft self-start p-6">
-          <h3 className="text-lg font-semibold">Reading level</h3>
-          <p className="mt-2 text-[var(--color-ink-soft)] leading-relaxed">
-            {rebuilt.readabilityDelta.note}
-          </p>
-          <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
-            Before:{" "}
-            <span className="font-semibold text-[var(--color-ink-soft)]">
-              grade {rebuilt.readabilityDelta.before}
-            </span>
-            <span aria-hidden="true"> · </span>
-            After:{" "}
-            <span className="font-semibold text-[var(--color-grow)]">
-              grade {rebuilt.readabilityDelta.after}
-            </span>
-          </p>
-        </div>
+        <h2 id="summary" className="text-xl font-semibold">
+          What Ditto did
+        </h2>
+        <dl className="grid gap-3 text-[var(--color-ink-soft)] sm:grid-cols-3">
+          <div>
+            <dt className="text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">
+              Profile sent
+            </dt>
+            <dd className="font-[family-name:var(--font-display)] mt-1 text-base font-semibold text-[var(--color-ink)]">
+              {rebuilt.profileApplied.disability}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">
+              Age
+            </dt>
+            <dd className="font-[family-name:var(--font-display)] mt-1 text-base font-semibold text-[var(--color-ink)]">
+              {rebuilt.profileApplied.age}
+            </dd>
+          </div>
+          <div className="break-all">
+            <dt className="text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">
+              Original
+            </dt>
+            <dd className="mt-1">
+              <a
+                href={rebuilt.originalUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-[var(--color-accent-strong)] underline-offset-4 hover:underline"
+              >
+                {rebuilt.originalUrl}
+              </a>
+            </dd>
+          </div>
+        </dl>
       </section>
 
       <div className="mt-12 flex flex-wrap items-center gap-4 border-t border-[var(--color-rule)] pt-8">
         <button type="button" onClick={tryAnother} className="btn-primary">
           Try another page
         </button>
-        <Link href="/preferences" className="btn-quiet underline-offset-4 hover:underline">
+        <Link
+          href="/preferences"
+          className="btn-quiet underline-offset-4 hover:underline"
+        >
           Adjust my needs
         </Link>
         <button
           type="button"
           onClick={() => {
             reset();
-            window.location.href = "/welcome";
+            window.location.href = "/";
           }}
           className="btn-quiet ml-auto underline-offset-4 hover:underline"
         >
@@ -127,28 +130,5 @@ function OutputContent() {
         </button>
       </div>
     </Container>
-  );
-}
-
-function SummaryGroup({ term, items }: { term: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div>
-      <dt className="font-[family-name:var(--font-display)] text-[var(--color-ink)] font-semibold">
-        {term}
-      </dt>
-      <dd>
-        <ul className="mt-2 flex flex-col gap-2">
-          {items.map((s, i) => (
-            <li
-              key={i}
-              className="border-l-2 border-[var(--color-grow)] pl-3 text-[var(--color-ink-soft)] leading-relaxed"
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      </dd>
-    </div>
   );
 }

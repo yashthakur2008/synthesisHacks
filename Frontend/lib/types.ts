@@ -4,8 +4,6 @@ export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   text: string;
-  /** When the assistant message reports an analysis, the structured findings travel with it. */
-  findings?: Analysis;
   /** When the assistant offers to create the improved version, render an inline CTA. */
   offerRebuild?: boolean;
 };
@@ -26,6 +24,8 @@ export type ReadingComplexity = 1 | 2 | 3 | 4 | 5;
 export type Preferences = {
   name: string;
   country: string;
+  /** Optional self-reported age. Backend uses this to tune language complexity. */
+  age: number | null;
   vision: VisionNeed[];
   hearing: HearingNeed[];
   dyslexia: DyslexiaSupport;
@@ -34,62 +34,21 @@ export type Preferences = {
   simplifyLanguage: boolean;
 };
 
-export type Finding = {
-  id: string;
-  label: string;
-  description: string;
-};
-
-export type Analysis = {
-  url: string;
-  pageTitle: string;
-  readability: {
-    level: "easy" | "moderate" | "difficult";
-    gradeApprox: number;
-    note: string;
-  };
-  missingA11y: Finding[];
-  structureIssues: Finding[];
-  barriers: Finding[];
-};
-
-export type RebuiltView = {
-  title: string;
-  body: RebuiltBlock[];
-};
-
-export type RebuiltBlock =
-  | { kind: "heading"; level: 2 | 3; text: string }
-  | { kind: "paragraph"; text: string }
-  | { kind: "list"; items: string[] }
-  | { kind: "callout"; tone: "info" | "warm" | "grow"; text: string }
-  | { kind: "media"; label: string; caption: string };
-
-export type Improvement = {
-  id: string;
-  category: "readability" | "a11y" | "structure";
-  summary: string;
-};
-
 export type Rebuilt = {
-  views: {
-    original: RebuiltView;
-    simplified: RebuiltView;
-    screenReader: RebuiltView;
-  };
-  improvements: Improvement[];
-  readabilityDelta: {
-    before: number;
-    after: number;
-    note: string;
-  };
+  /** Raw HTML from the backend `/transform` endpoint, rendered via iframe srcdoc. */
+  transformedHtml: string;
+  /** Original page URL, used for "view original" link-out. */
+  originalUrl: string;
+  /** Which backend profile we sent — kept for the summary panel. */
+  profileApplied: { disability: string; age: number };
 };
 
 export type FlowState = {
   authed: boolean;
   preferences: Preferences | null;
   source: { mode: "url" | "capture"; url?: string } | null;
-  analysis: Analysis | null;
+  /** Legacy mock field, kept on state for now so existing localStorage stays compatible. */
+  analysis: unknown | null;
   intent: string;
   messages: ChatMessage[];
   rebuilt: Rebuilt | null;
@@ -98,6 +57,7 @@ export type FlowState = {
 export const defaultPreferences: Preferences = {
   name: "",
   country: "",
+  age: null,
   vision: [],
   hearing: [],
   dyslexia: "none",
