@@ -14,6 +14,13 @@ class Settings(BaseSettings):
 
     gcs_bucket_name: str = ""
 
+    # ElevenLabs
+    elevenlabs_api_key: str = ""
+    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel — clear, calm
+
+    # ActionLayer
+    actionlayer_key: str = ""
+
     app_env: str = "development"
     port: int = 8080
 

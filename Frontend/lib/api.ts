@@ -12,7 +12,7 @@ export const BACKEND_URL =
 
 /** Shape the backend expects on `/transform`. */
 export type BackendProfile = {
-  disability: "blind" | "dyslexia" | "deaf" | "elderly" | "none";
+  disability: "blind" | "dyslexia" | "deaf" | "elderly" | "adhd" | "low_vision" | "tremor" | "none";
   age: number;
 };
 
@@ -54,6 +54,45 @@ export function preferencesToProfile(prefs: Preferences | null): BackendProfile 
   }
 
   return { disability: "none", age };
+}
+
+/** Send conversation to Gemini via /chat, returns Ditto's reply. */
+export async function dittoChat(
+  messages: { role: string; text: string }[],
+  preferences: Record<string, unknown> | null,
+  signal?: AbortSignal,
+): Promise<string> {
+  const res = await fetch(`${BACKEND_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, preferences: preferences ?? {} }),
+    signal,
+  });
+  if (!res.ok) return "I'm having trouble thinking right now — try again in a moment.";
+  const data = await res.json() as { reply?: string };
+  return data.reply ?? "I'm not sure how to respond to that — try pasting a link!";
+}
+
+/**
+ * Play text via ElevenLabs TTS through the backend.
+ * Fetches /voice/tts and plays the MP3 through the browser AudioContext.
+ */
+export async function speakText(text: string): Promise<void> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/voice/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => URL.revokeObjectURL(url);
+    await audio.play();
+  } catch {
+    // TTS failure is non-fatal — silently skip
+  }
 }
 
 /** Friendly error wrapper so callers can show a message. */

@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${atkinson.variable} ${lexend.variable}`}>
+    <html lang="en" className={`${atkinson.variable} ${lexend.variable}`} suppressHydrationWarning>
       <head>
         <PrefThemeScript />
       </head>
