@@ -19,7 +19,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ── Keys ───────────────────────────────────────────────────────────────────────
-GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY",    "AIzaSyAB3qSVoftWfKr74WA9s9ZbdYfwRz0P2xk")
+GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY",    "AIzaSyCeMqVEuzDn5DOLmojHi1qgLxSwBuI3fWQ")
 ACTIONLAYER_KEY   = os.getenv("ACTIONLAYER_KEY",   "ak_p4SlYFTug3Os3rUWembJZw")
 ELEVENLABS_KEY    = os.getenv("ELEVENLABS_KEY",    "727ee5b70a86428c10686040341468abf009591d6760cb3e3543899a61071282")
 ELEVENLABS_VOICE  = os.getenv("ELEVENLABS_VOICE",  "21m00Tcm4TlvDq8ikWAM")  # Rachel
@@ -101,15 +101,24 @@ def _scrape_actionlayer(url: str) -> str | None:
             timeout=45,
         )
         if r.status_code == 200:
-            data = r.json()
-            content = (
-                data.get("content")
-                or data.get("html")
-                or data.get("result", {}).get("content")
-                or data.get("result", {}).get("html")
-            )
-            if content and len(content) > 500:
-                return content
+            try:
+                data = r.json()
+            except Exception:
+                data = None
+            if data and isinstance(data, dict):
+                result = data.get("result") or {}
+                if not isinstance(result, dict):
+                    result = {}
+                content = (
+                    data.get("content")
+                    or data.get("html")
+                    or data.get("output")
+                    or result.get("content")
+                    or result.get("html")
+                    or result.get("output")
+                )
+                if content and isinstance(content, str) and len(content) > 200:
+                    return content
     except Exception:
         pass
     return None
@@ -124,13 +133,17 @@ def extract_meaningful_html(soup: BeautifulSoup) -> str:
     for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
         comment.extract()
 
-    for tag in soup.find_all(True):
-        style = tag.get("style", "").replace(" ", "")
+    for tag in list(soup.find_all(True)):
+        if not getattr(tag, "attrs", None):
+            continue
+        style = (tag.attrs.get("style") or "").replace(" ", "")
         if "display:none" in style or "visibility:hidden" in style:
             tag.decompose()
 
-    for tag in soup.find_all(True):
-        classes = " ".join(tag.get("class", []))
+    for tag in list(soup.find_all(True)):
+        if not getattr(tag, "attrs", None):
+            continue
+        classes = " ".join(tag.attrs.get("class") or [])
         if any(x in classes.lower() for x in
                ["ad-", "cookie", "popup", "banner", "tracking",
                 "analytics", "newsletter", "overlay", "modal", "gdpr"]):
@@ -146,36 +159,37 @@ def scrape(url: str) -> str:
     """
     Multi-strategy scraper:
     1. Try fast requests (3 user-agents)
-    2. Fall back to ActionLayer cloud browser
+    2. Fall back to ActionLayer cloud browser for JS-heavy sites
     Returns cleaned HTML content.
     """
     raw = _scrape_requests(url)
 
-    # If plain HTTP gives us something substantial, use it
-    if raw and len(raw) > 1000:
+    if raw and len(raw) > 500:
         soup = BeautifulSoup(raw, "html.parser")
         content = extract_meaningful_html(soup)
-        # If content looks JS-shell-only (minimal real text), try ActionLayer
+        # Only escalate to ActionLayer if we got almost no real text (JS shell)
         text_only = BeautifulSoup(content, "html.parser").get_text(separator=" ", strip=True)
-        if len(text_only) < 300:
-            al = _scrape_actionlayer(url)
-            if al:
-                soup2 = BeautifulSoup(al, "html.parser")
-                return extract_meaningful_html(soup2)
-        return content
+        if len(text_only) >= 200:
+            return content  # plain HTTP worked fine — use it
+        # Looks like a JS-only shell, try ActionLayer
+        al = _scrape_actionlayer(url)
+        if al:
+            soup2 = BeautifulSoup(al, "html.parser")
+            return extract_meaningful_html(soup2)
+        return content  # return what we have
 
-    # Plain HTTP failed — use ActionLayer
+    # Plain HTTP got nothing — try ActionLayer
     al = _scrape_actionlayer(url)
     if al:
         soup = BeautifulSoup(al, "html.parser")
         return extract_meaningful_html(soup)
 
-    # Last resort — minimal fallback
+    # Last resort — use whatever requests got
     if raw:
         soup = BeautifulSoup(raw, "html.parser")
         return extract_meaningful_html(soup)
 
-    raise RuntimeError(f"Could not fetch {url} — site may block automated access.")
+    raise RuntimeError(f"Could not fetch {url} — the site may block automated access.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -36,6 +36,20 @@ export type Preferences = {
   textScale: number;
 };
 
+export type SiteScore = {
+  readability: number;   // 0-100
+  accessibility: number; // 0-100
+};
+
+export type AccessibilityScore = {
+  total: number;
+  images:      { score: number; note: string };
+  structure:   { score: number; note: string };
+  readability: { score: number; note: string };
+  interactive: { score: number; note: string };
+  clarity:     { score: number; note: string };
+};
+
 export type Rebuilt = {
   /** Raw HTML from the backend `/transform` endpoint, rendered via iframe srcdoc. */
   transformedHtml: string;
@@ -43,6 +57,12 @@ export type Rebuilt = {
   originalUrl: string;
   /** Which backend profile we sent — kept for the summary panel. */
   profileApplied: { disability: string; age: number };
+  /** Accessibility scores before and after the rebuild. */
+  beforeScore?: AccessibilityScore;
+  afterScore?: AccessibilityScore;
+  originalScore?: SiteScore;
+  improvedScore?: SiteScore;
+  contentLevel?: "safe" | "mild" | "hardcore";
 };
 
 export type FlowState = {

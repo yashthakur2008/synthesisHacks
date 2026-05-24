@@ -11,8 +11,6 @@ import {
   preferencesToProfile,
   transform,
   TransformError,
-  dittoChat,
-  speakText,
 } from "@/lib/api";
 import type { ChatMessage, Rebuilt } from "@/lib/types";
 import { DittoMark } from "@/components/identity/DittoMark";
@@ -91,29 +89,18 @@ function ChatContent() {
     const url = extractUrl(text);
 
     if (!url) {
-      // Gemini-powered conversation — not hardcoded
-      setBusy(true);
-      const messagesWithUser = [...state.messages, userMsg];
-      patch({ messages: messagesWithUser, intent: state.intent ? `${state.intent}\n${text}` : text });
-
-      abortRef.current?.abort();
-      abortRef.current = new AbortController();
-
-      try {
-        const reply = await dittoChat(
-          messagesWithUser.map((m) => ({ role: m.role, text: m.text })),
-          state.preferences as Record<string, unknown> | null,
-          abortRef.current.signal,
-        );
-        const assistantMsg = { id: makeId(), role: "assistant" as const, text: reply };
-        patch({ messages: [...messagesWithUser, assistantMsg] });
-        void speakText(reply);
-      } catch {
-        // silently skip if aborted
-      } finally {
-        setBusy(false);
-        composerRef.current?.focus();
-      }
+      const reply = state.rebuilt
+        ? "Got it. Want to open the improved page, or paste another link?"
+        : "Sure — when you're ready, paste a link and I'll rebuild it for you.";
+      patch({
+        messages: [
+          ...state.messages,
+          userMsg,
+          { id: makeId(), role: "assistant", text: reply },
+        ],
+        intent: state.intent ? `${state.intent}\n${text}` : text,
+      });
+      composerRef.current?.focus();
       return;
     }
 
@@ -132,6 +119,9 @@ function ChatContent() {
         transformedHtml: data.transformed_html,
         originalUrl: url,
         profileApplied: profile,
+        beforeScore: data.before_score as Rebuilt["beforeScore"],
+        afterScore:  data.after_score  as Rebuilt["afterScore"],
+        contentLevel: data.content_level as Rebuilt["contentLevel"],
       };
       const done: ChatMessage = {
         id: makeId(),
@@ -142,7 +132,6 @@ function ChatContent() {
         offerRebuild: true,
       };
       patch({ messages: [...messagesWithUser, done], rebuilt });
-      void speakText(done.text);
     } catch (err) {
       const msg =
         err instanceof TransformError
